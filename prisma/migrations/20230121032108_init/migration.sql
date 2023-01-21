@@ -3,10 +3,10 @@ CREATE TABLE "User" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "passwordHash" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL DEFAULT '',
     "lastSession" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "dateBorn" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -16,9 +16,7 @@ CREATE TABLE "Song" (
     "name" TEXT NOT NULL,
     "isPublic" BOOLEAN NOT NULL,
     "artist" TEXT NOT NULL,
-    "artistId" INTEGER NOT NULL,
     "album" TEXT NOT NULL,
-    "albumId" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
     "genre" TEXT NOT NULL,
     "duration" INTEGER NOT NULL
