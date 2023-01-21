@@ -28,6 +28,7 @@ app.get('/home', (req, res) => {
 app.listen(port, () => {
     console.log(`El servidor se ejecuta en http://localhost:${port}/home`);
 });
+/// USERS ///
 // Creamos la ruta /api/v1/users, para insertar nuevos usuarios mediante postman
 app.post("/api/v1/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, email, password } = req.body;
@@ -41,6 +42,7 @@ app.post("/api/v1/users", (req, res) => __awaiter(void 0, void 0, void 0, functi
     });
     res.json(user);
 }));
+// Creamos la ruta /api/v1/logusers, para loguear los usuarios creados mediante postman
 // Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
 app.get("/api/v1/showusers", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield prisma.user.findMany({
@@ -48,8 +50,83 @@ app.get("/api/v1/showusers", (req, res) => __awaiter(void 0, void 0, void 0, fun
             id: true,
             name: true,
             email: true,
-            passwordHash: true,
+            passwordHash: false,
         }
     });
     res.json(user);
+}));
+/// SONGS ///
+// Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
+app.post("/api/v1/songs", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, artist, album, year, genre, duration, isPublic } = req.body;
+    const song = yield prisma.song.create({
+        data: {
+            name: name,
+            isPublic: isPublic,
+            artist: artist,
+            album: album,
+            year: year,
+            genre: genre,
+            duration: duration,
+        },
+    });
+    res.json(song);
+}));
+// GET: Creamos la ruta "/api/v1/songs", para mostrar todas las canciones creadas mediante postman
+app.get("/api/v1/songs", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const songs = yield prisma.song.findMany({
+        select: {
+            id: true,
+            name: true,
+            isPublic: true,
+            artist: true,
+            album: true,
+            year: true,
+            genre: true,
+            duration: true,
+        }
+    });
+    res.json(songs);
+}));
+// GET: Creamos la ruta "/api/v1/songs/:id", para mostrar una cancion  según su ID.
+app.get("/api/v1/songs/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const songs = yield prisma.song.findUnique({
+        where: {
+            id: parseInt(id)
+        }
+    });
+    res.json(songs);
+}));
+/// PLAY LIST /// 
+// GET: Creamos la ruta "/api/v1/playlist ", para añadir una canción a PlayList.
+app.post("/api/v1/playlists", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, userId, songIds } = req.body;
+    const playlist = yield prisma.playlist.create({
+        data: {
+            name: name,
+            userId: userId,
+            songs: { connect: songIds.map((id) => { return { id: parseInt(id) }; }) },
+        },
+    });
+    const PlaylistSongs = yield prisma.playlist.findUnique({
+        where: {
+            id: playlist.id,
+        },
+        include: {
+            songs: true,
+        },
+    });
+    res.json(PlaylistSongs);
+}));
+app.get("/api/v1/playlists", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const playlist = yield prisma.playlist.findMany({
+        select: {
+            id: true,
+            name: true,
+            userId: true,
+            songs: true,
+        }
+    });
+    res.json(playlist);
 }));
