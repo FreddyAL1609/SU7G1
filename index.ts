@@ -96,3 +96,17 @@ app.get("/api/v1/songs", async (req:Request, res:Response) => {
   );
   res.json(songs);
 });
+
+
+// GET: Creamos la ruta "/api/v1/songs/:id", para mostrar una cancion  según su ID.
+app.get("/api/v1/songs/:id", async (req:Request, res:Response) => {
+  const { id } = req.params
+  const songs = await prisma.song.findUnique(
+    {
+      where: {
+        id: parseInt(id)
+      }
+    }
+  );
+    res.json(songs);
+  });
