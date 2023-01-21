@@ -75,3 +75,23 @@ app.post("/api/v1/songs", async (req:Request , res:Response) => {
   });
   res.json(song);
 });
+
+
+// GET: Creamos la ruta "/api/v1/songs", para mostrar todas las canciones creadas mediante postman
+app.get("/api/v1/songs", async (req:Request, res:Response) => {
+  const songs = await prisma.song.findMany(
+    {
+      select:{
+        id:true,
+        name: true,
+        isPublic:true,
+        artist: true,
+        album: true,
+        year: true,
+        genre: true,
+        duration: true,
+      }
+    }
+  );
+  res.json(songs);
+});
