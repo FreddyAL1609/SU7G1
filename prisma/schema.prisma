@@ -28,9 +28,7 @@ model Song {
   name String
   isPublic Boolean
   artist String 
-  artistId Int 
   album String
-  albumId Int
   year Int
   genre String
   duration Int
