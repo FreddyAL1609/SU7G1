@@ -28,7 +28,8 @@ app.get('/home', (req, res) => {
 app.listen(port, () => {
     console.log(`El servidor se ejecuta en http://localhost:${port}/home`);
 });
-// Creamos la ruta /api/v1/users, para insertar nuevos usuarios mediante postman
+/// USERS ///
+// POST: Creamos la ruta /api/v1/users, para insertar nuevos usuarios mediante postman
 app.post("/api/v1/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, email, password } = req.body;
     const hashed = yield (0, bcrypt_1.hash)(password, 10);
@@ -41,6 +42,7 @@ app.post("/api/v1/users", (req, res) => __awaiter(void 0, void 0, void 0, functi
     });
     res.json(user);
 }));
+// Creamos la ruta /api/v1/logusers, para loguear los usuarios creados mediante postman
 // Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
 app.get("/api/v1/showusers", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield prisma.user.findMany({
@@ -48,8 +50,25 @@ app.get("/api/v1/showusers", (req, res) => __awaiter(void 0, void 0, void 0, fun
             id: true,
             name: true,
             email: true,
-            passwordHash: true,
+            passwordHash: false,
         }
     });
     res.json(user);
+}));
+/// SONGS ///
+// Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
+app.post("/api/v1/songs", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, artist, album, year, genre, duration, isPublic } = req.body;
+    const song = yield prisma.song.create({
+        data: {
+            name: name,
+            isPublic: isPublic,
+            artist: artist,
+            album: album,
+            year: year,
+            genre: genre,
+            duration: duration,
+        },
+    });
+    res.json(song);
 }));
