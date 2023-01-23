@@ -1,15 +1,27 @@
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcrypt';
+import { hash , compare} from 'bcrypt';
 
 
+
+function getUserIdFromToken(req: Request, res: Response, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token == null) return next();
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, userId) => {
+    if (err) return next();
+    req.userId = userId;
+    next();
+  });
+}
 
 dotenv.config();
 // Iniciando el cliente
 const prisma = new PrismaClient();
 
-
+const jwt = require("jsonwebtoken");
 const app: Express = express();
 const port = process.env.PORT;
 app.use(express.json());
@@ -26,12 +38,12 @@ app.listen(port, () => {
 // POST: Creamos la ruta /api/v1/users, para insertar nuevos usuarios mediante postman
 app.post("/api/v1/users", async (req:Request , res:Response) => {
   const { name, email, password } = req.body;
-  const hashed = await hash(password,10)
+  const hashedPassword = await hash(password,10)
   const user = await prisma.user.create({
     data: {
       name: name,
       email: email,
-      passwordHash: hashed,
+      passwordHash: hashedPassword,
      
     },
   });
@@ -39,10 +51,33 @@ app.post("/api/v1/users", async (req:Request , res:Response) => {
 });
 
 
-// Creamos la ruta /api/v1/logusers, para loguear los usuarios creados mediante postman
+//POST: Creamos la ruta /api/v1/login, para loguear los usuarios creados mediante postman
 
+app.post("/api/v1/users/login", async (req, res) => {
+  const { email, password } = req.body;
+  
+  const user = await prisma.user.findUnique(
+    {
+      where: {
+        email: email
+      }
+    }
+  );
+  if (!user) return res.sendStatus(401);
+  compare(password, user.passwordHash, function(err, result) {
+    if(result) {
+      const token = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET, {
+        expiresIn: "1800s",
+      });
+      return res.status(201).json({ token: token });
+    }
+    else {
+      return res.sendStatus(401);
+    }
+  });
+});
 
-// Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
+//GET: Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
 app.get("/api/v1/showusers", async (req:Request, res:Response) => {
   const user = await prisma.user.findMany(
     {
@@ -59,7 +94,7 @@ app.get("/api/v1/showusers", async (req:Request, res:Response) => {
 
 /// SONGS ///
 
-// Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
+// POST: Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
 app.post("/api/v1/songs", async (req:Request , res:Response) => {
   const { name, artist, album,year,genre, duration, isPublic } = req.body;
   const song = await prisma.song.create({
@@ -79,9 +114,12 @@ app.post("/api/v1/songs", async (req:Request , res:Response) => {
 
 
 // GET: Creamos la ruta "/api/v1/songs", para mostrar todas las canciones creadas mediante postman
-app.get("/api/v1/songs", async (req:Request, res:Response) => {
+app.get("/api/v1/songs", getUserIdFromToken, async (req:Request, res:Response) => {
+  const { userId } = req
+  const filter = userId ? {} : {isPublic: true} 
   const songs = await prisma.song.findMany(
     {
+      where: filter,
       select:{
         id:true,
         name: true,
@@ -110,3 +148,27 @@ app.get("/api/v1/songs/:id", async (req:Request, res:Response) => {
   );
     res.json(songs);
   });
+
+/// PLAY LIST /// 
+// POST: Creamos la ruta "/api/v1/playlists ", para crear playlist y añadir una canción a PlayList.
+app.post("/api/v1/playlists", async (req:Request , res:Response) => {
+  const { name, userId, songIds} = req.body;
+  
+  const playlist = await prisma.playlist.create({
+    data: {
+      name: name,
+      userId: userId,
+      songs: { connect: songIds.map((id: string) => { return {id: parseInt(id)} })},
+    },
+  });
+  const PlaylistSongs = await prisma.playlist.findUnique({
+    where: {
+      id: playlist.id,
+    },
+    include: {
+      songs: true,
+    },
+  })
+
+  res.json(PlaylistSongs);
+});
