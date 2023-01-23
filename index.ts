@@ -77,7 +77,7 @@ app.post("/api/v1/users/login", async (req, res) => {
   });
 });
 
-// Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
+//GET: Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
 app.get("/api/v1/showusers", async (req:Request, res:Response) => {
   const user = await prisma.user.findMany(
     {
@@ -85,7 +85,7 @@ app.get("/api/v1/showusers", async (req:Request, res:Response) => {
         id:true,
         name:true,
         email:true,
-        passwordHash:true,
+        passwordHash:false,
       }
     }
   );
@@ -94,7 +94,7 @@ app.get("/api/v1/showusers", async (req:Request, res:Response) => {
 
 /// SONGS ///
 
-// Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
+// POST: Creamos la ruta "/api/v1/songs", para crear nuevas canciones mediante postman.
 app.post("/api/v1/songs", async (req:Request , res:Response) => {
   const { name, artist, album,year,genre, duration, isPublic } = req.body;
   const song = await prisma.song.create({
@@ -114,9 +114,12 @@ app.post("/api/v1/songs", async (req:Request , res:Response) => {
 
 
 // GET: Creamos la ruta "/api/v1/songs", para mostrar todas las canciones creadas mediante postman
-app.get("/api/v1/songs", async (req:Request, res:Response) => {
+app.get("/api/v1/songs", getUserIdFromToken, async (req:Request, res:Response) => {
+  const { userId } = req
+  const filter = userId ? {} : {isPublic: true} 
   const songs = await prisma.song.findMany(
     {
+      where: filter,
       select:{
         id:true,
         name: true,
@@ -145,8 +148,6 @@ app.get("/api/v1/songs/:id", async (req:Request, res:Response) => {
   );
     res.json(songs);
   });
-
-
   /// PLAY LIST /// 
 // POST: Creamos la ruta "/api/v1/playlist ", para añadir una canción a PlayList.
 
