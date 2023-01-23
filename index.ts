@@ -149,9 +149,10 @@ app.get("/api/v1/songs/:id", async (req:Request, res:Response) => {
     res.json(songs);
   });
 
-/// PLAY LIST /// 
-// POST: Creamos la ruta "/api/v1/playlists ", para crear playlist y añadir una canción a PlayList.
-app.post("/api/v1/playlists", async (req:Request , res:Response) => {
+  /// PLAY LIST /// 
+// POST: Creamos la ruta "/api/v1/playlist ", para añadir una canción a PlayList.
+
+app.post("/api/v1/playlist", async (req:Request , res:Response) => {
   const { name, userId, songIds} = req.body;
   
   const playlist = await prisma.playlist.create({
