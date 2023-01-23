@@ -5,12 +5,12 @@ import { hash , compare} from 'bcrypt';
 
 
 
-function getUserIdFromToken(req: Request, res: Response, next) {
+function getUserIdFromToken(req: Request, res: Response, next: Function) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return next();
 
-  jwt.verify(token, process.env.TOKEN_SECRET, (err, userId) => {
+  jwt.verify(token, process.env.TOKEN_SECRET, (err: Object, userId: Number) => {
     if (err) return next();
     req.userId = userId;
     next();
@@ -78,7 +78,7 @@ app.post("/api/v1/users/login", async (req, res) => {
 });
 
 //GET: Creamos la ruta /api/v1/showusers, para mostrar los usuarios creados mediante postman
-app.get("/api/v1/showusers", async (req:Request, res:Response) => {
+app.get("/api/v1/users", async (req:Request, res:Response) => {
   const user = await prisma.user.findMany(
     {
       select:{
@@ -150,9 +150,8 @@ app.get("/api/v1/songs/:id", async (req:Request, res:Response) => {
   });
 
   /// PLAY LIST /// 
-// POST: Creamos la ruta "/api/v1/playlist ", para añadir una canción a PlayList.
-
-app.post("/api/v1/playlist", async (req:Request , res:Response) => {
+// POST: Creamos la ruta "/api/v1/playlist ", Para crear una Playlist y añadir una canción si el usuario desea.
+app.post("/api/v1/playlists", async (req:Request , res:Response) => {
   const { name, userId, songIds} = req.body;
   
   const playlist = await prisma.playlist.create({
@@ -172,4 +171,36 @@ app.post("/api/v1/playlist", async (req:Request , res:Response) => {
   })
 
   res.json(PlaylistSongs);
+});
+
+// POST: Creamos la ruta /api/v1/playlists/:id/songs, para insertar nuevas canciones a Playlist creadas previamente mediante postman.
+app.post("/api/v1/playlists/:id/songs", async (req:Request , res:Response) => {
+  const { id } = req.params 
+  const { idSong} = req.body;
+  const AddSongPlaylist = await prisma.playlist.update({
+    where: { id: parseInt(id) },
+    data: {
+      songs: {
+        connect: { id: idSong }
+      }
+    },
+  });
+  res.json(AddSongPlaylist);
+});
+
+
+// GET: Creamos la ruta "/api/v1/playlist ", para mostrar las PlayLists creadas.
+app.get("/api/v1/playlists", async (req:Request, res:Response) => {
+  const playlist = await prisma.playlist.findMany(
+    {
+      select:{
+        
+          id: true,
+          name: true,
+          userId: true,
+          songs: true,
+        }   
+      }
+  );
+  res.json(playlist);
 });
